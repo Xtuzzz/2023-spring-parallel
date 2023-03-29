@@ -1,0 +1,9 @@
+calculation MaX # diagonliztion of a matrix
+
+mAtrix_type random # initialization of a matrix
+matrix_print 1 # print the matrix
+
+
+nrOws 5 # number of rows
+
+ncols 4 # number of cols
