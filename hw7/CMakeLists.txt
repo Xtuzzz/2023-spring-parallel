@@ -1,23 +1,19 @@
 cmake_minimum_required(VERSION 3.13)
 project(hw7)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 
 add_definitions(-w)
 
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 IF (APPLE)
+ELSE()
     include_directories(
-            ${BLAS_LIBRARIES}/../vecLib.framework/Headers
+            /usr/include/
     )
-ELSEIF (UNIX)
-    include_directories(
-            /usr/include/x86_64-linux-gnu/
-    )
+    link_libraries(/usr/lib/x86_64-linux-gnu/liblapacke.so)
 ENDIF ()
-
-
 
 include_directories(
         ${PROJECT_SOURCE_DIR}/src/
@@ -26,4 +22,4 @@ include_directories(
 
 link_libraries(${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
-add_executable(hw7 src/main.cpp src/Input.cpp src/Input.h src/Timer.cpp)
+add_executable(hw7 src/main.cpp src/Input.cpp src/Timer.cpp)

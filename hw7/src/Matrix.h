@@ -9,17 +9,25 @@
 #include <iomanip>
 #include <complex>
 #include <vector>
-#include "clapack.h"
+
+#ifdef __APPLE__
+
+#include <vecLib/clapack.h>
+#include <vecLib/cblas.h>
+
+#else
+#include "lapacke.h"
 #include "cblas.h"
+#endif
+
+
 #include <fstream>
 #include <sstream>
 #include "Timer.h"
 
-
 template<typename T>
 class Matrix {
 public:
-
     Matrix();
 
     Matrix(std::vector<std::string> vec);
@@ -72,7 +80,6 @@ public:
         return out;
     }
 
-
 private:
     int row{0}, col{0};
     T **p{nullptr};
@@ -120,7 +127,6 @@ Matrix<T>::Matrix(std::vector<std::string> vec) {
     }
 }
 
-
 template<typename T>
 Matrix<T>::Matrix() {
     this->row = 1;
@@ -164,7 +170,6 @@ Matrix<T>::Matrix(int row, int col, T *val) {
         }
     }
 }
-
 
 template<typename T>
 bool Matrix<T>::isRSM() {
@@ -234,7 +239,6 @@ Matrix<T> Matrix<T>::blas_mul(const Matrix &B) {
     return Matrix<T>(this->row, B.col, c);
 }
 
-
 template<typename T>
 Matrix<T> Matrix<T>::lapack_diago(const std::string &file, int out) {
     Timer::begin("Matrix", "lapack_diago");
@@ -251,7 +255,7 @@ Matrix<T> Matrix<T>::lapack_diago(const std::string &file, int out) {
             a[col * i + j] = this->p[i][j];
         }
     }
-
+#ifdef __APPLE__
     if constexpr (std::is_same<T, double>::value) {
         lwork = -1;
         dsyev_("V", "U", &row, a, &col, w, &wkopt, &lwork, &info);
@@ -277,6 +281,26 @@ Matrix<T> Matrix<T>::lapack_diago(const std::string &file, int out) {
             exit(-1);
         }
     }
+#else
+    if constexpr (std::is_same<T, double>::value)
+    {
+        info = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', row, a, col, w);
+        if (info > 0)
+        {
+            std::cerr << "The algorithm failed to compute eigenvalues." << std::endl;
+            exit(-1);
+        }
+    }
+    else if constexpr (std::is_same<T, float>::value)
+    {
+        info = LAPACKE_ssyev(LAPACK_ROW_MAJOR, 'V', 'U', row, a, col, w);
+        if (info > 0)
+        {
+            std::cerr << "The algorithm failed to compute eigenvalues." << std::endl;
+            exit(-1);
+        }
+    }
+#endif
     Matrix ans(row, col, a);
     if (out) {
         std::ofstream ofs{file.empty() ? "out.txt" : file, std::ios::app};
@@ -411,4 +435,4 @@ void Matrix<T>::init() {
     }
 }
 
-#endif //HW7_MATRIX_H
+#endif // HW7_MATRIX_H
